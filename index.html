@@ -333,7 +333,7 @@ async function loadChildren(){ return await sget('child_records', []); }
 async function saveChildren(v){ await sset('child_records', v); }
 
 // Optional Google Apps Script sync — set your deployed Web App URL here to push data live.
-const SHEETS_WEBAPP_URL = ""; // e.g. "https://script.google.com/macros/s/XXXX/exec"
+const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx5TIXkCUjqIXpS3ft7Ll1fj5s4U1ZEFjLlvu_QKb8mC2phurHqldhn-3STgPqtEF0/exec"; // e.g. "https://script.google.com/macros/s/XXXX/exec"
 async function pushToSheets(tab, row){
   if(!SHEETS_WEBAPP_URL) return;
   try{
