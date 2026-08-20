@@ -192,6 +192,10 @@ const T = {
   byCommunity:{th:"แยกตามชุมชน", en:"By community", my:"ရပ်ကွက်အလိုက်"},
   allCommunities:{th:"ทุกชุมชน", en:"All communities", my:"ရပ်ကွက်အားလုံး"},
   transportRequests:{th:"คำร้องขอรถรับ-ส่ง", en:"Transport requests", my:"ယာဉ်တောင်းဆိုမှုများ"},
+  saveFailed:{th:"⚠️ บันทึกไม่สำเร็จ กรุณาลองใหม่ (พื้นที่จัดเก็บของเบราว์เซอร์อาจเต็มหรือถูกปิดกั้น)", en:"⚠️ Save failed. Please try again (browser storage may be full or blocked).", my:"⚠️ သိမ်းဆည်းမှု မအောင်မြင်ပါ"},
+  day:{th:"วันที่", en:"Day", my:"နေ့"},
+  month:{th:"เดือน", en:"Month", my:"လ"},
+  year:{th:"ปี", en:"Year", my:"နှစ်"},
   langName:{th:"ไทย", en:"EN", my:"မြန်မာ"},
   home:{th:"หน้าหลัก", en:"Home", my:"ပင်မ"},
   benefits:{th:"สิทธิประโยชน์", en:"Benefits", my:"အကျိုးခံစားခွင့်"},
@@ -319,11 +323,26 @@ async function hashPassword(pw){
   const buf = await crypto.subtle.digest('SHA-256', enc);
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+// Storage: uses Claude's built-in window.storage when previewed inside Claude.ai (syncs across
+// anyone viewing the artifact there). When the file is opened on its own — downloaded, double-clicked,
+// or hosted on a real website — window.storage doesn't exist, so we fall back to the browser's
+// localStorage automatically. NOTE: localStorage only lives on THAT ONE browser/device — it will not
+// be shared between different people's phones. For a real multi-user deployment, Google Sheets sync
+// (SHEETS_WEBAPP_URL below) needs to become the actual shared source of truth, not just a one-way backup.
+const HAS_CLAUDE_STORAGE = (typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+const LS_PREFIX = 'mpkl_';
 async function sget(key, fallback){
-  try{ const r = await window.storage.get(key, true); return r? JSON.parse(r.value): fallback; }catch(e){ return fallback; }
+  if(HAS_CLAUDE_STORAGE){
+    try{ const r = await window.storage.get(key, true); return r? JSON.parse(r.value): fallback; }catch(e){ /* key not found yet — fall through to fallback */ }
+    return fallback;
+  }
+  try{ const raw = localStorage.getItem(LS_PREFIX+key); return raw? JSON.parse(raw): fallback; }catch(e){ console.error('localStorage read error', e); return fallback; }
 }
 async function sset(key, val){
-  try{ await window.storage.set(key, JSON.stringify(val), true); }catch(e){ console.error('storage error', e); }
+  if(HAS_CLAUDE_STORAGE){
+    try{ const res = await window.storage.set(key, JSON.stringify(val), true); if(!res) console.error('window.storage.set returned null for', key); return; }catch(e){ console.error('window.storage error, falling back to localStorage', e); }
+  }
+  try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(val)); }catch(e){ console.error('localStorage write error', e); showToast(t('saveFailed')); }
 }
 async function loadUsers(){ return await sget('users', {}); }
 async function saveUsers(u){ await sset('users', u); }
@@ -333,7 +352,7 @@ async function loadChildren(){ return await sget('child_records', []); }
 async function saveChildren(v){ await sset('child_records', v); }
 
 // Optional Google Apps Script sync — set your deployed Web App URL here to push data live.
-const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx5TIXkCUjqIXpS3ft7Ll1fj5s4U1ZEFjLlvu_QKb8mC2phurHqldhn-3STgPqtEF0/exec"; // e.g. "https://script.google.com/macros/s/XXXX/exec"
+const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwgyQgZtehshEmT2sDxa1Th999sZv8QZII0SISbZY3cOHm6GuD8sJ_VQeTtVZ_vRIA/exec";
 async function pushToSheets(tab, row){
   if(!SHEETS_WEBAPP_URL) return;
   try{
@@ -383,6 +402,32 @@ function nutritionClass(months, sex, weight, height){
 /* ============== RENDER HELPERS ============== */
 function el(html){ const d=document.createElement('div'); d.innerHTML=html; return d.firstElementChild; }
 function fmtDate(d){ if(!d) return '—'; const dt=new Date(d); return dt.toLocaleDateString(state.lang==='th'?'th-TH':(state.lang==='my'?'my-MM':'en-GB'),{year:'numeric',month:'short',day:'numeric'}); }
+
+// Day → Month → Year picker (Thai convention: วันที่ เดือน ปี), stored internally as ISO yyyy-mm-dd.
+const MONTH_NAMES = {
+  th:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],
+  en:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+  my:["ဇန်","ဖေ","မတ်","ဧ","မေ","ဇွန်","ဇူ","ဩ","စက်","အောက်","နို","ဒီ"]
+};
+function DateInput(prefix, isoVal, yearMin, yearMax){
+  let d='', m='', y='';
+  if(isoVal){ const parts = isoVal.split('-'); if(parts.length===3){ y=parseInt(parts[0],10); m=parseInt(parts[1],10); d=parseInt(parts[2],10); } }
+  const months = MONTH_NAMES[state.lang]||MONTH_NAMES.th;
+  const dayOpts = Array.from({length:31}, (_,i)=>i+1);
+  const yearOpts = []; for(let yy=yearMax; yy>=yearMin; yy--) yearOpts.push(yy);
+  return `<div style="display:grid; grid-template-columns:0.8fr 1.3fr 1fr; gap:6px;">
+    <select id="${prefix}_d"><option value="">${t('day')}</option>${dayOpts.map(dd=>`<option value="${dd}" ${d===dd?'selected':''}>${dd}</option>`).join('')}</select>
+    <select id="${prefix}_m"><option value="">${t('month')}</option>${months.map((mn,i)=>`<option value="${i+1}" ${m===(i+1)?'selected':''}>${mn}</option>`).join('')}</select>
+    <select id="${prefix}_y"><option value="">${t('year')}</option>${yearOpts.map(yy=>`<option value="${yy}" ${y===yy?'selected':''}>${yy}</option>`).join('')}</select>
+  </div>`;
+}
+function getDateInput(prefix){
+  const dEl=document.getElementById(prefix+'_d'), mEl=document.getElementById(prefix+'_m'), yEl=document.getElementById(prefix+'_y');
+  if(!dEl||!mEl||!yEl) return '';
+  const d=dEl.value, m=mEl.value, y=yEl.value;
+  if(!d||!m||!y) return '';
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
 
 function Topbar(showBack, backAction){
   return `
@@ -597,16 +642,16 @@ async function Pregnancy(){
     return `${Topbar(true, "state.editingPregId=null; goto('pregnancy')")}
     <div class="screen">
       <h2 class="title-lg">${t('pregnancyRecords')}</h2>
-      <div class="field"><label>${t('firstFoundDate')}</label><input type="date" id="p_found" value="${rec.foundDate||''}"></div>
+      <div class="field"><label>${t('firstFoundDate')}</label>${DateInput('p_found', rec.foundDate||'', 2020, 2030)}</div>
       <div class="field"><label>${t('gaWeeks')}</label><input type="number" id="p_ga" value="${rec.gaWeeks||''}"></div>
-      <div class="field"><label>${t('ancDate')}</label><input type="date" id="p_anc" value="${rec.ancDate||''}"></div>
+      <div class="field"><label>${t('ancDate')}</label>${DateInput('p_anc', rec.ancDate||'', 2020, 2030)}</div>
       <div class="row2">
         <div class="field"><label>${t('weightKg')}</label><input type="number" step="0.1" id="p_w" value="${rec.weight||''}"></div>
         <div class="field"><label>${t('heightCm')}</label><input type="number" step="0.1" id="p_h" value="${rec.height||''}"></div>
       </div>
-      <div class="field"><label>${t('edd')}</label><input type="date" id="p_edd" value="${rec.edd||''}"></div>
+      <div class="field"><label>${t('edd')}</label>${DateInput('p_edd', rec.edd||'', 2020, 2030)}</div>
       <div class="card soft-pink"><div class="eyebrow">${t('deliveryDate')}</div>
-        <div class="field"><label>${t('deliveryDate')}</label><input type="date" id="p_dd" value="${rec.deliveryDate||''}"></div>
+        <div class="field"><label>${t('deliveryDate')}</label>${DateInput('p_dd', rec.deliveryDate||'', 2020, 2030)}</div>
         <div class="field"><label>${t('deliveryPlace')}</label><input id="p_dp" value="${rec.deliveryPlace||''}"></div>
         <div class="field"><label>${t('birthWeight')}</label><input type="number" id="p_bw" value="${rec.birthWeight||''}"></div>
         <label class="check-row" style="margin:0;"><input type="checkbox" id="p_pt" ${rec.preterm?'checked':''}><span style="font-size:13px;">${t('preterm')}</span></label>
@@ -639,13 +684,13 @@ async function savePregRecord(id){
   const rec = {
     id: id==='new'? 'p_'+Date.now(): id,
     ownerCid: state.user.cid, ownerName: state.user.name, community: state.user.community,
-    foundDate: document.getElementById('p_found').value,
+    foundDate: getDateInput('p_found'),
     gaWeeks: document.getElementById('p_ga').value,
-    ancDate: document.getElementById('p_anc').value,
+    ancDate: getDateInput('p_anc'),
     weight: document.getElementById('p_w').value,
     height: document.getElementById('p_h').value,
-    edd: document.getElementById('p_edd').value,
-    deliveryDate: document.getElementById('p_dd').value,
+    edd: getDateInput('p_edd'),
+    deliveryDate: getDateInput('p_dd'),
     deliveryPlace: document.getElementById('p_dp').value,
     birthWeight: document.getElementById('p_bw').value,
     preterm: document.getElementById('p_pt').checked,
@@ -700,7 +745,7 @@ function ChildForm(c){
     <div class="field"><label>${t('childName')}</label><input id="c_name" value="${c.name||''}"></div>
     <div class="field"><label>${t('childId')}</label><input id="c_id" value="${c.cid||''}"></div>
     <div class="field"><label>${t('motherName')}</label><input id="c_mom" value="${c.mother||''}"></div>
-    <div class="field"><label>${t('dob')}</label><input type="date" id="c_dob" value="${c.dob||''}"></div>
+    <div class="field"><label>${t('dob')}</label>${DateInput('c_dob', c.dob||'', 2018, 2027)}</div>
     <div class="field"><label>${t('gender')}</label>
       <select id="c_gender"><option value="male" ${c.gender==='male'?'selected':''}>${t('male')}</option><option value="female" ${c.gender==='female'?'selected':''}>${t('female')}</option></select>
     </div>
@@ -710,7 +755,7 @@ function ChildForm(c){
 }
 async function saveChildRecord(){
   const name=document.getElementById('c_name').value.trim();
-  const dob=document.getElementById('c_dob').value;
+  const dob=getDateInput('c_dob');
   if(!name||!dob){ showToast(t('requiredFields')); return; }
   const rec = { id:'c_'+Date.now(), ownerCid:state.user.cid, community: state.user.community,
     name, cid:document.getElementById('c_id').value.trim(), mother:document.getElementById('c_mom').value.trim(),
@@ -767,7 +812,7 @@ function NutritionBlock(c, g){
 function GrowthForm(c){
   return `<div class="card soft-yellow">
     <div class="eyebrow">${t('addGrowth')}</div>
-    <div class="field"><label>${t('measureDate')}</label><input type="date" id="g_date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>${t('measureDate')}</label>${DateInput('g_date', new Date().toISOString().slice(0,10), 2018, 2030)}</div>
     <div class="row2">
       <div class="field"><label>${t('weightKg')}</label><input type="number" step="0.1" id="g_w"></div>
       <div class="field"><label>${t('heightCm')}</label><input type="number" step="0.1" id="g_h"></div>
@@ -777,7 +822,7 @@ function GrowthForm(c){
   </div>`;
 }
 async function saveGrowth(childId){
-  const date = document.getElementById('g_date').value;
+  const date = getDateInput('g_date');
   const w = document.getElementById('g_w').value, h = document.getElementById('g_h').value;
   if(!date||!w||!h){ showToast(t('requiredFields')); return; }
   const all = await loadChildren();
@@ -880,7 +925,7 @@ async function Transport(){
     </div>
     <div class="card">
       <div class="eyebrow">📝 ${t('transportRequest')}</div>
-      <div class="field"><label>${t('apptDate')}</label><input type="date" id="tr_date"></div>
+      <div class="field"><label>${t('apptDate')}</label>${DateInput('tr_date', '', 2024, 2030)}</div>
       <div class="field"><label>${t('hospitalName')}</label><input id="tr_hosp"></div>
       <div class="field"><label>${t('relativeName')}</label><input id="tr_rel"></div>
       <div class="field"><label>${t('phone')}</label><input id="tr_phone" value="${state.user.phone||''}"></div>
@@ -891,7 +936,7 @@ async function Transport(){
   ${BottomNav('home')}`;
 }
 async function submitTransport(){
-  const date=document.getElementById('tr_date').value;
+  const date=getDateInput('tr_date');
   const hosp=document.getElementById('tr_hosp').value.trim();
   if(!date||!hosp){ showToast(t('requiredFields')); return; }
   const rec = {
