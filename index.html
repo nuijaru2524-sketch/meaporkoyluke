@@ -432,6 +432,14 @@ const T = {
   month:{th:"เดือน", en:"Month", my:"လ"},
   year:{th:"ปี", en:"Year", my:"နှစ်"},
   openInGmaps:{th:"เปิดดูใน Google Maps", en:"Open in Google Maps", my:"Google Maps တွင်ဖွင့်ရန်"},
+  dspmHowToTest:{th:"วิธีประเมิน", en:"How to test", my:"စမ်းသပ်နည်း"},
+  dspmMethodLabel:{th:"วิธีทำ", en:"Method", my:"လုပ်ဆောင်ပုံ"},
+  dspmCriteriaLabel:{th:"เกณฑ์ผ่าน", en:"Pass criteria", my:"အောင်မြင်ကြောင်း စံသတ်မှတ်ချက်"},
+  dspmThaiNote:{th:"", en:"ℹ️ Why this stays in Thai: this text is medical assessment content copied word-for-word from the official DSPM manual and must stay 100% accurate — any translation error could affect a child's developmental test result. In practice, the health worker or village volunteer who administers this test is always Thai-speaking and already uses the official Thai DSPM manual, so the test items themselves are kept in Thai here too.", my:"ℹ️ ထိုင်းဘာသာဖြင့်သာ ဖော်ပြရခြင်း အကြောင်းရင်း: ဤအကြောင်းအရာများသည် တရားဝင် DSPM လက်စွဲမှ တိုက်ရိုက်ကူးယူထားသော ဆေးဘက်ဆိုင်ရာ အကဲဖြတ်မှု အကြောင်းအရာများဖြစ်ပြီး တိကျမှု အပြည့်အဝ လိုအပ်ပါသည် — ဘာသာပြန်ခြင်းတွင် အမှားရှိပါက ကလေး၏ ဖွံ့ဖြိုးမှု အကဲဖြတ်ချက်ကို ထိခိုက်စေနိုင်ပါသည်။ လက်တွေ့တွင် ကလေးကို စမ်းသပ်သူသည် ထိုင်းဘာသာစကား ပြောသူဖြစ်ပြီး တရားဝင် ထိုင်းဘာသာ DSPM လက်စွဲကို အသုံးပြုနေသူဖြစ်ရာ ဤစာရင်းများကိုလည်း ထိုင်းဘာသာဖြင့်သာ ဆက်လက်ဖော်ပြထားပါသည်။"},
+  domainsNotPassing:{th:"ด้านที่ยังไม่ผ่าน", en:"Domains not yet passing", my:"မအောင်မြင်သေးသော ကဏ္ဍများ"},
+  contactHealthStaff:{th:"ติดต่องานส่งเสริมสุขภาพ", en:"Contact health promotion staff", my:"ကျန်းမာရေးဝန်ထမ်းများကို ဆက်သွယ်ရန်"},
+  summaryTab:{th:"สรุป", en:"Summary", my:"အကျဉ်းချုပ်"},
+  mhFlaggedNote:{th:"แสดงเฉพาะรายที่คะแนน ≥ 7 หรือมีสัญญาณเสี่ยงทำร้ายตนเอง", en:"Showing only scores ≥7 or self-harm risk flags", my:"ရမှတ် ≥7 သို့မဟုတ် အန္တရာယ်လက္ခဏာရှိသူများသာ ပြသထားသည်"},
   addPhoto:{th:"📷 แนบรูปภาพ", en:"📷 Add photo", my:"📷 ဓာတ်ပုံထည့်ရန်"},
   changePhoto:{th:"📷 เปลี่ยนรูปภาพ", en:"📷 Change photo", my:"📷 ဓာတ်ပုံပြောင်းရန်"},
   photoUploaded:{th:"อัปโหลดรูปภาพแล้ว 📷", en:"Photo uploaded 📷", my:"ဓာတ်ပုံ တင်ပြီး 📷"},
@@ -612,7 +620,7 @@ async function sset(key, val){
 }
 
 // ---- Google Sheets sync layer ----
-const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwgyQgZtehshEmT2sDxa1Th999sZv8QZII0SISbZY3cOHm6GuD8sJ_VQeTtVZ_vRIA/exec";
+const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzxIuPkOqMaORMs9DcbDRw6fWDwPgT7Klh6FcIEguAACl3KiGoYBlmgNliSq9Y8EVE/exec";
 // Must match APP_SECRET in the Apps Script backend exactly — basic guard against random/bot access
 // to the endpoint. Not real per-user authentication (anyone who views this page's source sees it too).
 const APP_SECRET = 'UJfAdubIf3BKsf6S5O3rDNo8';
@@ -1106,7 +1114,7 @@ function ChildCard(c){
   const age = calcAge(c.dob);
   return `<div class="card" onclick="state.editingChildId='${c.id}'; render()" style="display:flex; gap:12px; align-items:center;">
     ${c.photo? `<img src="${c.photo}" style="width:44px; height:44px; object-fit:cover; border-radius:50%;">` : `<div class="avatar-badge">${c.gender==='male'?'👦🏻':'👧🏻'}</div>`}
-    <div style="flex:1;"><b style="font-family:'Kanit'">${c.name}</b><div class="sub" style="margin:0;">${t('ageNow')}: ${age.y} ${state.lang==='th'?'ปี':'y'} ${age.m} ${state.lang==='th'?'เดือน':'m'}</div></div>
+    <div style="flex:1;"><b style="font-family:'Kanit'">${c.name}</b><div class="sub" style="margin:0;">${t('ageNow')}: ${age.y} ${state.lang==='th'?'ปี':(state.lang==='en'?'y':'နှစ်')} ${age.m} ${state.lang==='th'?'เดือน':(state.lang==='en'?'m':'လ')}</div></div>
   </div>`;
 }
 function ChildForm(c){
@@ -1179,7 +1187,7 @@ function ChildDetail(c){
         <input type="file" id="c_photo_input" accept="image/*" capture="environment" style="display:none;" onchange="onChildPhotoSelected('${c.id}')">
         <button onclick="document.getElementById('c_photo_input').click()" style="position:absolute; bottom:-4px; right:-4px; width:22px; height:22px; border-radius:50%; background:var(--pink-d); border:2px solid #fff; font-size:11px; color:#fff; display:flex; align-items:center; justify-content:center; padding:0;">📷</button>
       </div>
-      <div><b style="font-family:'Kanit'; font-size:16px;">${c.name}</b><div class="sub" style="margin:0;">${t('ageNow')}: ${age.y} ${state.lang==='th'?'ปี':'y'} ${age.m} ${state.lang==='th'?'เดือน':'m'}</div></div>
+      <div><b style="font-family:'Kanit'; font-size:16px;">${c.name}</b><div class="sub" style="margin:0;">${t('ageNow')}: ${age.y} ${state.lang==='th'?'ปี':(state.lang==='en'?'y':'နှစ်')} ${age.m} ${state.lang==='th'?'เดือน':(state.lang==='en'?'m':'လ')}</div></div>
     </div>
     <div class="growth-track">${stageIcons.map((s,i)=>`<div class="growth-step ${i<=stageIdx?'done':''}">${s}<div class="bar"></div></div>`).join('')}</div>
 
@@ -1249,7 +1257,8 @@ function DspmForm(c, age){
   const byDomain = {};
   items.forEach((it,i)=>{ (byDomain[it.d]=byDomain[it.d]||[]).push({...it, idx:i}); });
   return `<div class="card soft-yellow">
-    <div class="eyebrow">${t('round')}: ${band[0]}${band[1]!==band[0]?('–'+band[1]):''} ${state.lang==='th'?'เดือน':'mo'}</div>
+    <div class="eyebrow">${t('round')}: ${band[0]}${band[1]!==band[0]?('–'+band[1]):''} ${state.lang==='th'?'เดือน':(state.lang==='en'?'mo':'လ')}</div>
+    ${state.lang!=='th'? `<p class="hint" style="margin-bottom:10px;">${t('dspmThaiNote')}</p>` : ''}
     <div class="field"><label>${t('round')}</label>
       <select id="d_round"><option value="1">${t('attempt1')}</option><option value="2">${t('attempt2')}</option></select>
     </div>
@@ -1259,9 +1268,9 @@ function DspmForm(c, age){
         <div class="card" style="margin:6px 0 10px; padding:12px;">
           <b style="font-family:'Kanit'; font-size:13px;">${it.s}</b>
           ${it.ef? `<span class="pill pill-orange" style="margin-left:6px;">EF</span>`:''}
-          <details style="margin-top:6px;"><summary style="font-size:12px; color:var(--pink-d); cursor:pointer;">${state.lang==='th'?'วิธีประเมิน':(state.lang==='en'?'How to test':'စမ်းသပ်နည်း')}</summary>
-            <p class="hint" style="margin:6px 0 0;"><b>${state.lang==='th'?'วิธีทำ':'Method'}:</b> ${it.m}</p>
-            <p class="hint" style="margin:4px 0 0;"><b>${state.lang==='th'?'เกณฑ์ผ่าน':'Pass criteria'}:</b> ${it.c}</p>
+          <details style="margin-top:6px;"><summary style="font-size:12px; color:var(--pink-d); cursor:pointer;">${t('dspmHowToTest')}</summary>
+            <p class="hint" style="margin:6px 0 0;"><b>${t('dspmMethodLabel')}:</b> ${it.m}</p>
+            <p class="hint" style="margin:4px 0 0;"><b>${t('dspmCriteriaLabel')}:</b> ${it.c}</p>
           </details>
           <div class="pf-row" style="margin-top:8px;">
             <button type="button" class="pf-btn pass ${state.dspmDraft[key]['i'+it.idx]==='pass'?'on':''}" onclick="setDspm('${key}','i${it.idx}','pass')">✅ ${t('pass')}</button>
@@ -1309,7 +1318,7 @@ function DspmSummaryBlock(d){
   const failedDomains = d.domainResults? Object.keys(d.domainResults).filter(k=>d.domainResults[k]==='fail'): [];
   return `<div class="card ${d.passAll?'soft-green':'soft-pink'}" style="margin-top:10px;">
     <p style="margin:0; font-family:'Kanit'; font-weight:600; font-size:14px;">${msg}</p>
-    ${failedDomains.length? `<p class="hint" style="margin:6px 0 0;">${state.lang==='th'?'ด้านที่ยังไม่ผ่าน':'Domains not yet passing'}: ${failedDomains.map(k=>(DSPM_DOMAINS.find(x=>x.k===k)||{})[state.lang]||k).join(', ')}</p>`:''}
+    ${failedDomains.length? `<p class="hint" style="margin:6px 0 0;">${t('domainsNotPassing')}: ${failedDomains.map(k=>(DSPM_DOMAINS.find(x=>x.k===k)||{})[state.lang]||k).join(', ')}</p>`:''}
     ${d.reassessDate? `<p class="sub" style="margin:6px 0 0;">${t('reassessDate')}: ${fmtDate(d.reassessDate)}</p>`:''}
     ${!d.passAll? `<p class="hint" style="margin-top:8px;">${t('riskVisitNote')}</p>`:''}
   </div>`;
@@ -1396,7 +1405,7 @@ function Emergency(){
       <p class="sub" style="color:var(--ink); white-space:pre-line;">${t('childDangerList')}</p>
     </div>
     <div class="card">
-      <div class="eyebrow">☎️ ${state.lang==='th'?'ติดต่องานส่งเสริมสุขภาพ':'Contact health promotion staff'}</div>
+      <div class="eyebrow">☎️ ${t('contactHealthStaff')}</div>
       <a href="tel:054237237" class="btn btn-secondary">📞 054-237237 ต่อ 5207</a>
     </div>
   </div>
@@ -1512,7 +1521,7 @@ async function StaffHome(){
   const fmh = (filter? mhAll.filter(r=>r.community===filter): mhAll).filter(r=>r.score>=7 || r.crisisFlag);
   const commCounts = {};
   [...preg, ...kids].forEach(r=>{ commCounts[r.community]=(commCounts[r.community]||0)+1; });
-  const tabs = [['summary', state.lang==='th'?'สรุป':'Summary'], ['preg', t('pregnancyRecords')], ['child', t('childRecords')], ['transport', t('transportRequests')], ['mh', t('mentalHealthTitle')]];
+  const tabs = [['summary', t('summaryTab')], ['preg', t('pregnancyRecords')], ['child', t('childRecords')], ['transport', t('transportRequests')], ['mh', t('mentalHealthTitle')]];
   return `${Topbar(false)}
   <div class="screen">
     <div class="card soft-yellow" style="display:flex; align-items:center; gap:12px;">
@@ -1559,7 +1568,7 @@ async function StaffHome(){
         <div class="sub">${fmtDate(r.apptDate)} · ${r.hospital}</div>
       </div>`).join(''): `<p class="sub">${t('noData')}</p>`}</div>` : ''}
 
-    ${state.staffTab==='mh'? `<div class="card"><p class="hint" style="margin:0 0 8px;">${state.lang==='th'?'แสดงเฉพาะรายที่คะแนน ≥ 7 หรือมีสัญญาณเสี่ยงทำร้ายตนเอง':'Showing only scores ≥7 or self-harm risk flags'}</p>${fmh.length? fmh.map(r=>`
+    ${state.staffTab==='mh'? `<div class="card"><p class="hint" style="margin:0 0 8px;">${t('mhFlaggedNote')}</p>${fmh.length? fmh.map(r=>`
       <div class="list-item" style="display:block; padding:10px 0;">
         <b style="font-family:'Kanit'">${r.ownerName}</b> <span class="pill pill-grey">${r.community}</span> ${r.crisisFlag? `<span class="pill pill-red">⚠️</span>`:''}
         <div class="sub">${fmtDate(r.date)} · ${t('q9ScoreLabel')}: ${r.score} · ${mhLevel(r.score).label[state.lang]}</div>
