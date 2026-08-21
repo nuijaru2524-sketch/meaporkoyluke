@@ -432,6 +432,10 @@ const T = {
   month:{th:"เดือน", en:"Month", my:"လ"},
   year:{th:"ปี", en:"Year", my:"နှစ်"},
   openInGmaps:{th:"เปิดดูใน Google Maps", en:"Open in Google Maps", my:"Google Maps တွင်ဖွင့်ရန်"},
+  addPhoto:{th:"📷 แนบรูปภาพ", en:"📷 Add photo", my:"📷 ဓာတ်ပုံထည့်ရန်"},
+  changePhoto:{th:"📷 เปลี่ยนรูปภาพ", en:"📷 Change photo", my:"📷 ဓာတ်ပုံပြောင်းရန်"},
+  photoUploaded:{th:"อัปโหลดรูปภาพแล้ว 📷", en:"Photo uploaded 📷", my:"ဓာတ်ပုံ တင်ပြီး 📷"},
+  photoSyncNote:{th:"รูปภาพจะถูกส่งให้เจ้าหน้าที่เห็นด้วย", en:"The photo will also be shared with staff", my:"ဓာတ်ပုံကို ဝန်ထမ်းများ မြင်နိုင်မည်"},
   weeklyTipTitle:{th:"ความรู้ตามอายุครรภ์", en:"Tips for this stage of pregnancy", my:"ကိုယ်ဝန်ကာလအလိုက် အကြံပြုချက်"},
   childTipTitle:{th:"ความรู้การดูแลเด็กตามวัย", en:"Age-based child care tips", my:"အသက်အလိုက် ကလေးစောင့်ရှောက်ရေး"},
   viewAllStages:{th:"ดูความรู้ทุกช่วง", en:"View all stages", my:"အဆင့်အားလုံးကြည့်ရန်"},
@@ -553,23 +557,44 @@ function t(key){ const o=T[key]; if(!o) return key; return o[state.lang]||o.th; 
 // Demo staff accounts — logs in through the SAME public login box (no separate staff URL).
 // Add more staff by adding entries here. Change these demo credentials before real deployment.
 const STAFF_ACCOUNTS = [
-  { cid:"0857061385", pw:"LpgHealth2569!", name:"เจ้าหน้าที่งานส่งเสริมสุขภาพ", role:"staff", avatar:"🩺" }
+  { cid:"0857061385", pw:"LampangHealth2569", name:"เจ้าหน้าที่งานส่งเสริมสุขภาพ", role:"staff", avatar:"🩺" }
 ];
 
 const state = { lang:'th', view:'splash', user:null, consentGiven:false, regDraft:{avatar:AVATARS[0], community:'', lat:null, lng:null}, toast:null, editingPregId:null, editingChildId:null, dspmDraft:{}, staffFilter:'', staffTab:'summary' };
 
 // Passwords are never stored in plain text — hashed (SHA-256) client-side before saving or comparing.
+// Compress/resize a photo file client-side before storing (keeps records small for storage + Sheets).
+function compressImage(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > h && w > maxDim){ h = Math.round(h*maxDim/w); w = maxDim; }
+        else if(h > maxDim){ w = Math.round(w*maxDim/h); h = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality||0.72));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 async function hashPassword(pw){
   const enc = new TextEncoder().encode(pw);
   const buf = await crypto.subtle.digest('SHA-256', enc);
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
-// Storage: uses Claude's built-in window.storage when previewed inside Claude.ai (syncs across
-// anyone viewing the artifact there). When the file is opened on its own — downloaded, double-clicked,
-// or hosted on a real website — window.storage doesn't exist, so we fall back to the browser's
-// localStorage automatically. NOTE: localStorage only lives on THAT ONE browser/device — it will not
-// be shared between different people's phones. For a real multi-user deployment, Google Sheets sync
-// (SHEETS_WEBAPP_URL below) needs to become the actual shared source of truth, not just a one-way backup.
+// Storage: uses Claude's built-in window.storage when previewed inside Claude.ai, or the browser's
+// localStorage when hosted for real, as a fast LOCAL CACHE. When SHEETS_WEBAPP_URL below is set,
+// Google Sheets is the real shared source of truth — data is read from and written to Sheets so it's
+// visible across every phone/device and to staff. Local storage just avoids a network round-trip on
+// every screen and gives a fallback if the network/Sheets is briefly unreachable.
 const HAS_CLAUDE_STORAGE = (typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function');
 const LS_PREFIX = 'mpkl_';
 async function sget(key, fallback){
@@ -585,20 +610,70 @@ async function sset(key, val){
   }
   try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(val)); }catch(e){ console.error('localStorage write error', e); showToast(t('saveFailed')); }
 }
-async function loadUsers(){ return await sget('users', {}); }
-async function saveUsers(u){ await sset('users', u); }
-async function loadPreg(){ return await sget('pregnancy_records', []); }
-async function savePreg(v){ await sset('pregnancy_records', v); }
-async function loadChildren(){ return await sget('child_records', []); }
-async function saveChildren(v){ await sset('child_records', v); }
 
-// Optional Google Apps Script sync — set your deployed Web App URL here to push data live.
+// ---- Google Sheets sync layer ----
 const SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwgyQgZtehshEmT2sDxa1Th999sZv8QZII0SISbZY3cOHm6GuD8sJ_VQeTtVZ_vRIA/exec";
-async function pushToSheets(tab, row){
-  if(!SHEETS_WEBAPP_URL) return;
+// Must match APP_SECRET in the Apps Script backend exactly — basic guard against random/bot access
+// to the endpoint. Not real per-user authentication (anyone who views this page's source sees it too).
+const APP_SECRET = 'UJfAdubIf3BKsf6S5O3rDNo8';
+async function sheetsList(tab){
+  if(!SHEETS_WEBAPP_URL) return null;
   try{
-    await fetch(SHEETS_WEBAPP_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify({tab, row}) });
-  }catch(e){ console.warn('sheets sync failed', e); }
+    const res = await fetch(SHEETS_WEBAPP_URL + '?action=list&tab=' + encodeURIComponent(tab) + '&secret=' + encodeURIComponent(APP_SECRET));
+    const data = await res.json();
+    if(data.status==='ok') return data.rows;
+    console.warn('sheetsList error', data); return null;
+  }catch(e){ console.warn('sheetsList failed (offline or CORS?)', e); return null; }
+}
+async function sheetsSave(tab, row){
+  if(!SHEETS_WEBAPP_URL) return false;
+  try{
+    const res = await fetch(SHEETS_WEBAPP_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({action:'save', tab, row, secret:APP_SECRET}) });
+    const data = await res.json();
+    return data.status==='ok';
+  }catch(e){ console.warn('sheetsSave failed (offline or CORS?)', e); return false; }
+}
+async function sheetsLogin(cid, pwHash){
+  if(!SHEETS_WEBAPP_URL) return null;
+  try{
+    const res = await fetch(SHEETS_WEBAPP_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({action:'login', cid, pwHash, secret:APP_SECRET}) });
+    const data = await res.json();
+    return data.status==='ok'? data.user : null;
+  }catch(e){ console.warn('sheetsLogin failed (offline or CORS?)', e); return null; }
+}
+
+// In-memory cache per app session — avoids re-fetching Sheets on every re-render (e.g. while typing
+// or ticking DSPM checkboxes). Saves update the cache directly instead of forcing a re-fetch.
+const _cache = { users:null, pregnancy:null, children:null };
+
+async function loadUsers(){
+  if(_cache.users) return _cache.users;
+  const rows = await sheetsList('Users');
+  if(rows){ const obj={}; rows.forEach(u=>{ if(u.cid) obj[u.cid]=u; }); _cache.users=obj; sset('users', obj); return obj; }
+  const local = await sget('users', {}); _cache.users = local; return local;
+}
+async function saveUsers(u){ _cache.users = u; await sset('users', u); }
+async function loadPreg(){
+  if(_cache.pregnancy) return _cache.pregnancy;
+  const rows = await sheetsList('ข้อมูลหญิงตั้งครรภ์');
+  if(rows){ _cache.pregnancy = rows; sset('pregnancy_records', rows); return rows; }
+  const local = await sget('pregnancy_records', []); _cache.pregnancy = local; return local;
+}
+async function savePreg(v){ _cache.pregnancy = v; await sset('pregnancy_records', v); }
+async function loadChildren(){
+  if(_cache.children) return _cache.children;
+  const rows = await sheetsList('ข้อมูลเด็ก 0-5 ปี');
+  if(rows){ _cache.children = rows; sset('child_records', rows); return rows; }
+  const local = await sget('child_records', []); _cache.children = local; return local;
+}
+async function saveChildren(v){ _cache.children = v; await sset('child_records', v); }
+
+// Push one record to Sheets (upsert by id/cid) — awaited so the UI can react if it fails. Sheets is
+// the real database when configured; this always also keeps the local cache in sync via the callers.
+async function pushToSheets(tab, row){
+  const ok = await sheetsSave(tab, row);
+  if(!ok && SHEETS_WEBAPP_URL) console.warn('Could not sync to Google Sheets — saved locally only for now.');
+  return ok;
 }
 
 function showToast(msg){ state.toast = msg; render(); setTimeout(()=>{ state.toast=null; render(); }, 2200); }
@@ -850,7 +925,12 @@ async function doLogin(){
   for(const s of STAFF_ACCOUNTS){
     if(s.cid===uid && (await hashPassword(s.pw))===pwHash){ state.user = {...s, pw:undefined}; goto('staffHome'); return; }
   }
-  const users = await loadUsers();
+  if(SHEETS_WEBAPP_URL){
+    const remoteUser = await sheetsLogin(uid, pwHash);
+    if(remoteUser){ state.user = remoteUser; _cache.users = _cache.users||{}; _cache.users[uid]=remoteUser; goto('home'); return; }
+  }
+  // offline fallback: check the local cache (only has data from a prior successful sync on this device)
+  const users = await sget('users', {});
   const u = users[uid];
   if(!u || u.pw!==pwHash){ showToast(t('wrongLogin')); return; }
   state.user = u;
@@ -894,6 +974,12 @@ async function Pregnancy(){
     return `${Topbar(true, "state.editingPregId=null; goto('pregnancy')")}
     <div class="screen">
       <h2 class="title-lg">${t('pregnancyRecords')}</h2>
+      <div class="card" style="text-align:center;">
+        ${(state.pregPhotoDraft!==undefined? state.pregPhotoDraft: rec.photo)? `<img src="${state.pregPhotoDraft!==undefined? state.pregPhotoDraft: rec.photo}" style="width:96px; height:96px; object-fit:cover; border-radius:50%; margin:0 auto 10px; display:block; box-shadow:0 4px 12px rgba(0,0,0,0.12);">` : `<div class="avatar-badge" style="margin:0 auto 10px; width:96px; height:96px; font-size:40px;">🤰🏻</div>`}
+        <input type="file" id="p_photo_input" accept="image/*" capture="environment" style="display:none;" onchange="onPregPhotoSelected()">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('p_photo_input').click()">${(state.pregPhotoDraft!==undefined? state.pregPhotoDraft: rec.photo)? t('changePhoto'): t('addPhoto')}</button>
+        <p class="hint" style="margin-top:6px;">${t('photoSyncNote')}</p>
+      </div>
       <div class="field"><label>${t('firstFoundDate')}</label>${DateInput('p_found', rec.foundDate||'', 2020, 2030)}</div>
       <div class="field"><label>${t('gaWeeks')}</label><input type="number" id="p_ga" value="${rec.gaWeeks||''}"></div>
       <div class="field"><label>${t('ancDate')}</label>${DateInput('p_anc', rec.ancDate||'', 2020, 2030)}</div>
@@ -915,7 +1001,7 @@ async function Pregnancy(){
   return `${Topbar(true, "goto('home')")}
   <div class="screen">
     <h2 class="title-lg">${t('pregnancyRecords')}</h2>
-    <button class="btn btn-primary" onclick="state.editingPregId='new'; render()">${t('addRecord')}</button>
+    <button class="btn btn-primary" onclick="state.editingPregId='new'; state.pregPhotoDraft=null; render()">${t('addRecord')}</button>
     ${PregTipsBlock(mine)}
     <div style="margin-top:14px;">
     ${mine.length===0? `<div class="empty"><div class="ic">🤰</div>${t('noData')}</div>` : mine.map(r=>PregCard(r)).join('')}
@@ -943,17 +1029,31 @@ function PregTipsBlock(mine){
 function PregCard(r){
   const ga = Number(r.gaWeeks||0);
   const ancOk = ga>0 && ga<12;
-  return `<div class="card" onclick="state.editingPregId='${r.id}'; render()">
+  return `<div class="card" onclick="state.editingPregId='${r.id}'; state.pregPhotoDraft=undefined; render()" style="display:flex; gap:12px;">
+    ${r.photo? `<img src="${r.photo}" style="width:48px; height:48px; object-fit:cover; border-radius:50%; flex-shrink:0;">`:''}
+    <div style="flex:1;">
     <div class="eyebrow">📅 ${fmtDate(r.foundDate)}</div>
     <div class="pill ${ancOk?'pill-green':'pill-orange'}">${ancOk? t('ancStatusGood'): t('ancStatusLate')}</div>
     <div class="list-item"><span class="sub">${t('weightKg')}/${t('heightCm')}</span><b>${r.weight||'—'} kg / ${r.height||'—'} cm</b></div>
     ${r.deliveryDate? `<div class="list-item"><span class="sub">${t('deliveryDate')}</span><b>${fmtDate(r.deliveryDate)}</b></div>`:''}
+    </div>
   </div>`;
 }
+async function onPregPhotoSelected(){
+  const file = document.getElementById('p_photo_input').files[0];
+  if(!file) return;
+  try{
+    const dataUrl = await compressImage(file, 800, 0.72);
+    state.pregPhotoDraft = dataUrl;
+    render();
+  }catch(e){ console.error('photo compress error', e); showToast(t('saveFailed')); }
+}
 async function savePregRecord(id){
+  const existing = id!=='new' ? (await loadPreg()).find(x=>x.id===id) : null;
   const rec = {
     id: id==='new'? 'p_'+Date.now(): id,
     ownerCid: state.user.cid, ownerName: state.user.name, community: state.user.community, ownerLat: state.user.lat, ownerLng: state.user.lng,
+    photo: state.pregPhotoDraft!==undefined? state.pregPhotoDraft : (existing? existing.photo : undefined),
     foundDate: getDateInput('p_found'),
     gaWeeks: document.getElementById('p_ga').value,
     ancDate: getDateInput('p_anc'),
@@ -973,6 +1073,7 @@ async function savePregRecord(id){
   pushToSheets('ข้อมูลหญิงตั้งครรภ์', rec);
   showToast(t('savedToast'));
   state.editingPregId=null;
+  state.pregPhotoDraft=undefined;
   goto('pregnancy');
 }
 
@@ -1004,7 +1105,7 @@ async function Children(){
 function ChildCard(c){
   const age = calcAge(c.dob);
   return `<div class="card" onclick="state.editingChildId='${c.id}'; render()" style="display:flex; gap:12px; align-items:center;">
-    <div class="avatar-badge">${c.gender==='male'?'👦🏻':'👧🏻'}</div>
+    ${c.photo? `<img src="${c.photo}" style="width:44px; height:44px; object-fit:cover; border-radius:50%;">` : `<div class="avatar-badge">${c.gender==='male'?'👦🏻':'👧🏻'}</div>`}
     <div style="flex:1;"><b style="font-family:'Kanit'">${c.name}</b><div class="sub" style="margin:0;">${t('ageNow')}: ${age.y} ${state.lang==='th'?'ปี':'y'} ${age.m} ${state.lang==='th'?'เดือน':'m'}</div></div>
   </div>`;
 }
@@ -1036,6 +1137,20 @@ async function saveChildRecord(){
   state.editingChildId = rec.id;
   render();
 }
+async function onChildPhotoSelected(childId){
+  const file = document.getElementById('c_photo_input').files[0];
+  if(!file) return;
+  try{
+    const dataUrl = await compressImage(file, 800, 0.72);
+    const all = await loadChildren();
+    const c = all.find(x=>x.id===childId);
+    c.photo = dataUrl;
+    await saveChildren(all);
+    pushToSheets('ข้อมูลเด็ก 0-5 ปี', {childId, photo: dataUrl});
+    showToast(t('photoUploaded'));
+    render();
+  }catch(e){ console.error('photo compress error', e); showToast(t('saveFailed')); }
+}
 function ChildTipsBlock(months){
   const current = getChildTip(months);
   const showAll = !!state.showAllChildTips;
@@ -1059,7 +1174,11 @@ function ChildDetail(c){
   return `${Topbar(true, "state.editingChildId=null; goto('children')")}
   <div class="screen">
     <div class="card soft-green" style="display:flex; align-items:center; gap:12px;">
-      <div class="avatar-badge" style="background:#fff;">${c.gender==='male'?'👦🏻':'👧🏻'}</div>
+      <div style="position:relative;">
+        ${c.photo? `<img src="${c.photo}" style="width:52px; height:52px; object-fit:cover; border-radius:50%; background:#fff;">` : `<div class="avatar-badge" style="background:#fff;">${c.gender==='male'?'👦🏻':'👧🏻'}</div>`}
+        <input type="file" id="c_photo_input" accept="image/*" capture="environment" style="display:none;" onchange="onChildPhotoSelected('${c.id}')">
+        <button onclick="document.getElementById('c_photo_input').click()" style="position:absolute; bottom:-4px; right:-4px; width:22px; height:22px; border-radius:50%; background:var(--pink-d); border:2px solid #fff; font-size:11px; color:#fff; display:flex; align-items:center; justify-content:center; padding:0;">📷</button>
+      </div>
       <div><b style="font-family:'Kanit'; font-size:16px;">${c.name}</b><div class="sub" style="margin:0;">${t('ageNow')}: ${age.y} ${state.lang==='th'?'ปี':'y'} ${age.m} ${state.lang==='th'?'เดือน':'m'}</div></div>
     </div>
     <div class="growth-track">${stageIcons.map((s,i)=>`<div class="growth-step ${i<=stageIdx?'done':''}">${s}<div class="bar"></div></div>`).join('')}</div>
@@ -1278,7 +1397,7 @@ function Emergency(){
     </div>
     <div class="card">
       <div class="eyebrow">☎️ ${state.lang==='th'?'ติดต่องานส่งเสริมสุขภาพ':'Contact health promotion staff'}</div>
-      <a href="tel:0857061385" class="btn btn-secondary">📞 085-706-1385</a>
+      <a href="tel:054237237" class="btn btn-secondary">📞 054-237237 ต่อ 5207</a>
     </div>
   </div>
   ${BottomNav('home')}`;
@@ -1531,6 +1650,7 @@ window.savePregRecord = savePregRecord; window.saveChildRecord = saveChildRecord
 window.setDspm = setDspm; window.saveDspm = saveDspm; window.toggleBenefit = toggleBenefit; window.doLogout = doLogout;
 window.captureGps = captureGps; window.submitTransport = submitTransport;
 window.setMhAnswer = setMhAnswer; window.saveMentalHealth = saveMentalHealth;
+window.onPregPhotoSelected = onPregPhotoSelected; window.onChildPhotoSelected = onChildPhotoSelected;
 render();
 </script>
 </body>
