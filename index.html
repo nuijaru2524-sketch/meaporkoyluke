@@ -506,6 +506,7 @@ const T = {
   modAbout:{th:"เกี่ยวกับระบบ", en:"About this system", my:"စနစ်အကြောင်း"},
   logout:{th:"ออกจากระบบ", en:"Log out", my:"ထွက်ရန်"},
   pregnancyRecords:{th:"ข้อมูลการตั้งครรภ์ของฉัน", en:"My pregnancy records", my:"ကျွန်မ၏ ကိုယ်ဝန်မှတ်တမ်း"},
+  pregnancyRecordsStaff:{th:"หญิงตั้งครรภ์", en:"Pregnant women", my:"ကိုယ်ဝန်ဆောင်မိခင်များ"},
   addRecord:{th:"+ เพิ่มข้อมูล", en:"+ Add record", my:"+ ထည့်ရန်"},
   save:{th:"บันทึกข้อมูล", en:"Save", my:"သိမ်းရန်"},
   cancel:{th:"ยกเลิก", en:"Cancel", my:"မလုပ်တော့ပါ"},
@@ -522,6 +523,7 @@ const T = {
   ancStatusGood:{th:"✅ ฝากครรภ์ก่อน 12 สัปดาห์ (ตามเกณฑ์)", en:"✅ ANC before 12 weeks (on target)", my:"✅ ၁၂ ပတ်မတိုင်မီ ANC (ပန်းတိုင်မှန်)"},
   ancStatusLate:{th:"⚠️ ฝากครรภ์หลัง 12 สัปดาห์", en:"⚠️ ANC after 12 weeks", my:"⚠️ ၁၂ ပတ်ကျော် ANC"},
   childRecords:{th:"เด็กในความดูแลของฉัน", en:"My children", my:"ကျွန်မ၏ ကလေးများ"},
+  childRecordsStaff:{th:"เด็ก 0-5 ปี", en:"Children 0-5 yrs", my:"ကလေး ၀-၅ နှစ်"},
   addChild:{th:"+ เพิ่มข้อมูลเด็ก", en:"+ Add child", my:"+ ကလေးထည့်ရန်"},
   childName:{th:"ชื่อ-สกุลเด็ก", en:"Child's full name", my:"ကလေးအမည်"},
   childId:{th:"เลขบัตรประชาชนเด็ก", en:"Child's National ID", my:"ကလေး ID"},
@@ -1569,7 +1571,7 @@ async function StaffHome(){
   const fmh = (filter? mhAll.filter(r=>r.community===filter): mhAll).filter(r=>r.score>=7 || r.crisisFlag);
   const commCounts = {};
   [...preg, ...kids].forEach(r=>{ commCounts[r.community]=(commCounts[r.community]||0)+1; });
-  const tabs = [['summary', t('summaryTab')], ['preg', t('pregnancyRecords')], ['child', t('childRecords')], ['transport', t('transportRequests')], ['mh', t('mentalHealthTitle')]];
+  const tabs = [['summary', t('summaryTab')], ['preg', t('pregnancyRecordsStaff')], ['child', t('childRecordsStaff')], ['transport', t('transportRequests')], ['mh', t('mentalHealthTitle')]];
   return `${Topbar(false)}
   <div class="screen">
     <div class="card soft-yellow" style="display:flex; align-items:center; gap:12px;">
