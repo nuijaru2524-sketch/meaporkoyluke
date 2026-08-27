@@ -366,6 +366,22 @@ const T = {
     my:"ဤ application သည် လမ်ဖန်းမြို့နယ်စည်ပင်၏ မေတ္တာနှင့် ဂရုစိုက်မှုမှ ဖန်တီးထားပြီး ကျွန်ုပ်တို့၏ မိခင်နှင့်ကလေးများကို စောင့်ရှောက်ရန်ဖြစ်ပါသည်။"},
   gpsPin:{th:"ปักหมุดที่อยู่ปัจจุบัน", en:"Pin current location", my:"လက်ရှိတည်နေရာ ပင်တပ်ရန်"},
   gpsPinHint:{th:"เพื่อให้ อสม. ไปเยี่ยมบ้านได้ถูกต้อง กรุณาปักหมุดตำแหน่งที่อยู่จริง", en:"So the village health volunteer can find you, please pin your real location.", my:"ကျန်းမာရေးစေတနာ့ဝန်ထမ်းများ ရှာဖွေနိုင်ရန် တည်နေရာ ပင်တပ်ပါ"},
+  outsideMunicipality:{th:"อาศัยอยู่นอกเขตเทศบาลนครลำปาง", en:"I live outside Lampang Municipality", my:"လမ်ဖန်းမြို့နယ်စည်ပင် နယ်နိမိတ်အပြင်ဘက်တွင် နေထိုင်သည်"},
+  outsideMunicipalityNote:{th:"⚠️ ท่านจะไม่สามารถใช้บริการรถรับส่งของเทศบาลนครลำปางได้ ส่วนฟีเจอร์อื่นทั้งหมดใช้งานได้ตามปกติ", en:"⚠️ You will not be able to use Lampang Municipality's hospital transport service. All other features work normally.", my:"⚠️ လမ်ဖန်းမြို့နယ်စည်ပင်၏ ယာဉ်ဝန်ဆောင်မှုကို အသုံးပြု၍ မရပါ။ အခြားလုပ်ဆောင်ချက်များ ပုံမှန်အတိုင်း သုံးနိုင်ပါသည်။"},
+  yourAreaPlaceholder:{th:"ระบุอำเภอ/จังหวัดที่อาศัยอยู่ (ไม่บังคับ)", en:"Your district/province (optional)", my:"နေထိုင်ရာ ခရိုင်/တိုင်း (မဖြစ်မနေမလို)"},
+  transportOutsideNotice:{th:"บริการรถรับ-ส่งของเทศบาลนครลำปาง ให้บริการเฉพาะประชาชนที่อาศัยอยู่ในเขตเทศบาลนครลำปางเท่านั้น เนื่องจากท่านระบุว่าอาศัยอยู่นอกเขต จึงไม่สามารถใช้บริการนี้ได้ กรุณาติดต่อหน่วยงานในพื้นที่ของท่านโดยตรง",
+    en:"Lampang Municipality's transport service is only available to residents within the municipality boundary. Since you indicated you live outside the area, this service isn't available to you — please contact your local government office directly.",
+    my:"လမ်ဖန်းမြို့နယ်စည်ပင်၏ ယာဉ်ဝန်ဆောင်မှုသည် နယ်နိမိတ်အတွင်းနေထိုင်သူများအတွက်သာဖြစ်သည်။"},
+  officialFormBtn:{th:"📝 ยื่นคำร้องขอรถผ่านระบบทางการของเทศบาล", en:"📝 Submit request via the municipality's official system", my:"📝 တရားဝင်စနစ်မှတဆင့် လျှောက်ထားရန်"},
+  officialFormGuideTitle:{th:"วิธีกรอกแบบฟอร์ม", en:"How to fill in the form", my:"ဖောင်ဖြည့်နည်း"},
+  officialFormGuideNote:{th:"แบบฟอร์มนี้เป็นระบบร้องเรียน/คำร้องทางการของเทศบาลนครลำปาง (ภาษาไทยเท่านั้น) เมื่อกดปุ่มด้านบนจะเปิดหน้าเว็บใหม่ กรุณากรอกตามขั้นตอนนี้:",
+    en:"This is Lampang Municipality's official complaint/request system (Thai language only). Tapping the button above opens a new page — please fill it in following these steps:",
+    my:"ဤဖောင်သည် လမ်ဖန်းမြို့နယ်စည်ပင်၏ တရားဝင်စနစ်ဖြစ်ပြီး ထိုင်းဘာသာဖြင့်သာ ရှိပါသည်။ အထက်ပါခလုတ်ကို နှိပ်ပြီး အောက်ပါအဆင့်များအတိုင်း ဖြည့်ပါ။"},
+  officialFormStep1:{th:"ช่อง \"ประเภทคำร้อง\" เลือก \"คำร้องทั่วไป\"", en:"For \"Request type\", choose \"General request\" (คำร้องทั่วไป)", my:"\"ပုံစံအမျိုးအစား\" တွင် \"ယေဘုယျပုံစံ\" ကိုရွေးပါ"},
+  officialFormStep2:{th:"ช่อง \"หัวข้อเรื่อง\" พิมพ์ \"ขอรถรับส่งไปโรงพยาบาลตามนัด\"", en:"For \"Subject\", type \"Request hospital transport for appointment\" (ขอรถรับส่งไปโรงพยาบาลตามนัด)", my:"\"ခေါင်းစဉ်\" တွင် ဆေးရုံသွားရန် ယာဉ်တောင်းဆိုမှု ဟု ရေးပါ"},
+  officialFormStep3:{th:"ช่อง \"รายละเอียด\" ระบุ วันนัด โรงพยาบาลปลายทาง และชื่อญาติ 1 คนที่จะเดินทางไปด้วย", en:"In \"Details\", include the appointment date, destination hospital, and the name of the 1 relative who will travel with you", my:"\"အသေးစိတ်\" တွင် ချိန်းရက်၊ ဆေးရုံအမည်နှင့် လိုက်ပါမည့် ဆွေမျိုး ၁ ဦး၏အမည် ထည့်ပါ"},
+  officialFormStep4:{th:"กรอก \"ข้อมูลผู้ร้องเรียน\" (คำนำหน้า ชื่อ-นามสกุล ภาษาไทย เบอร์โทร) ให้ครบตามจริง แล้วกดส่ง", en:"Fill in your \"Contact information\" (title, Thai name, phone number) completely and accurately, then submit", my:"\"တောင်းဆိုသူ အချက်အလက်\" ကို အပြည့်အစုံဖြည့်ပြီး ပေးပို့ပါ"},
+  transportNowExternalNote:{th:"ตั้งแต่นี้ ประชาชนยื่นคำร้องขอรถผ่านระบบทางการของเทศบาลโดยตรง (ไม่ผ่านแอปนี้แล้ว) รายการด้านล่างเป็นคำร้องเก่าที่เคยส่งผ่านแอปก่อนหน้านี้", en:"Requests now go through the municipality's official system directly (no longer through this app). The list below shows older requests submitted via the app before this change.", my:"ယခုမှစတင်၍ တောင်းဆိုမှုများသည် တရားဝင်စနစ်မှတဆင့် တိုက်ရိုက်သွားပါသည်။"},
   gpsBtn:{th:"📍 ใช้ตำแหน่ง GPS ปัจจุบัน", en:"📍 Use current GPS location", my:"📍 လက်ရှိ GPS သုံးရန်"},
   gpsCaptured:{th:"✅ ปักหมุดแล้ว", en:"✅ Location pinned", my:"✅ ပင်တပ်ပြီး"},
   gpsFailed:{th:"⚠️ ไม่สามารถระบุตำแหน่งได้ กรุณาลองใหม่หรืออนุญาตการเข้าถึงตำแหน่ง", en:"⚠️ Could not get location. Please allow location access and try again.", my:"⚠️ တည်နေရာ မရနိုင်ပါ"},
@@ -852,10 +868,16 @@ function Register(){
       <p class="hint">${t('citizenIdHint')}</p>
     </div>
     <div class="field"><label>${t('community')}</label>
-      <select id="r_comm">
+      <select id="r_comm" style="${d.outside?'display:none;':''}">
         <option value="">${t('selectCommunity')}</option>
         ${COMMUNITIES.map(c=>`<option value="${c}" ${d.community===c?'selected':''}>${c}</option>`).join('')}
       </select>
+      <input id="r_area" style="${d.outside?'':'display:none;'}" placeholder="${t('yourAreaPlaceholder')}" value="${d.area||''}">
+      <label class="check-row" style="margin-top:10px;">
+        <input type="checkbox" ${d.outside?'checked':''} onchange="onOutsideToggle(this.checked)">
+        <span style="font-size:13px;">${t('outsideMunicipality')}</span>
+      </label>
+      ${d.outside? `<p class="hint" style="color:#C9761A;">${t('outsideMunicipalityNote')}</p>`:''}
     </div>
     <div class="card soft-yellow">
       <div class="eyebrow">📍 ${t('gpsPin')}</div>
@@ -868,6 +890,7 @@ function Register(){
   </div>`;
 }
 function setDraftAvatar(a){ state.regDraft.avatar=a; render(); }
+function onOutsideToggle(checked){ state.regDraft.outside = checked; render(); }
 function onCidModeChange(){
   const mode = document.getElementById('r_cid_mode').value;
   state.regDraft.cidMode = mode;
@@ -899,15 +922,17 @@ async function doRegister(){
   const name=document.getElementById('r_name').value.trim();
   const pw=document.getElementById('r_pw').value;
   const phone=document.getElementById('r_phone').value.trim();
-  const comm=document.getElementById('r_comm').value;
+  const outside = !!state.regDraft.outside;
+  const comm = outside? '': document.getElementById('r_comm').value;
+  const area = outside? document.getElementById('r_area').value.trim(): '';
   const cidMode = document.getElementById('r_cid_mode').value;
   const cidRaw = document.getElementById('r_id') ? document.getElementById('r_id').value.trim() : '';
   const citizenIdOptional = cidMode==='skip' ? '' : cidRaw;
-  if(!name||!phone||!pw||!comm){ showToast(t('requiredFields')); return; }
+  if(!name||!phone||!pw||(!outside && !comm)){ showToast(t('requiredFields')); return; }
   const users = await loadUsers();
   const uid = phone; // phone number is the login username — no national ID required
   const pwHash = await hashPassword(pw);
-  users[uid] = { cid:uid, name, pw:pwHash, phone, citizenIdOptional, citizenIdMode:cidMode, community:comm, avatar:state.regDraft.avatar, lat:state.regDraft.lat, lng:state.regDraft.lng, createdAt: new Date().toISOString() };
+  users[uid] = { cid:uid, name, pw:pwHash, phone, citizenIdOptional, citizenIdMode:cidMode, community:comm, outsideMunicipality:outside, area, avatar:state.regDraft.avatar, lat:state.regDraft.lat, lng:state.regDraft.lng, createdAt: new Date().toISOString() };
   await saveUsers(users);
   pushToSheets('Users', users[uid]);
   state.user = users[uid];
@@ -1353,22 +1378,30 @@ function Benefits(){
 function toggleBenefit(k,v){ state.benefitChecks=state.benefitChecks||{}; state.benefitChecks[k]=v; }
 
 /* ---- Transport request module ---- */
+const OFFICIAL_TRANSPORT_FORM_URL = "https://localgov.egov.go.th/%E0%B9%80%E0%B8%97%E0%B8%A8%E0%B8%9A%E0%B8%B2%E0%B8%A5%E0%B8%99%E0%B8%84%E0%B8%A3%E0%B8%A5%E0%B8%B3%E0%B8%9B%E0%B8%B2%E0%B8%87-03520102/one-stop-service/complaint";
 async function Transport(){
+  const outside = !!state.user.outsideMunicipality;
   return `${Topbar(true, "goto('home')")}
   <div class="screen">
     <h2 class="title-lg">${t('transportTitle')}</h2>
     <div class="card soft-yellow">
       <p class="sub" style="color:var(--ink)">${t('transportBody')}</p>
     </div>
-    <div class="card">
-      <div class="eyebrow">📝 ${t('transportRequest')}</div>
-      <div class="field"><label>${t('apptDate')}</label>${DateInput('tr_date', '', 2024, 2030)}</div>
-      <div class="field"><label>${t('hospitalName')}</label><input id="tr_hosp"></div>
-      <div class="field"><label>${t('relativeName')}</label><input id="tr_rel"></div>
-      <div class="field"><label>${t('phone')}</label><input id="tr_phone" value="${state.user.phone||''}"></div>
-      <div class="field"><label>${t('transportNote')}</label><textarea id="tr_note" rows="2"></textarea></div>
-      <button class="btn btn-primary" onclick="submitTransport()">${t('transportRequest')}</button>
-    </div>
+    ${outside? `
+    <div class="card soft-pink">
+      <p class="sub" style="color:var(--ink)">${t('transportOutsideNotice')}</p>
+    </div>` : `
+    <a href="${OFFICIAL_TRANSPORT_FORM_URL}" target="_blank" class="btn btn-primary">${t('officialFormBtn')}</a>
+    <div class="card" style="margin-top:14px;">
+      <div class="eyebrow">📋 ${t('officialFormGuideTitle')}</div>
+      <p class="hint" style="margin-top:0;">${t('officialFormGuideNote')}</p>
+      <ol style="margin:10px 0 0; padding-left:20px; font-size:13.5px; color:var(--ink); line-height:1.8;">
+        <li>${t('officialFormStep1')}</li>
+        <li>${t('officialFormStep2')}</li>
+        <li>${t('officialFormStep3')}</li>
+        <li>${t('officialFormStep4')}</li>
+      </ol>
+    </div>`}
   </div>
   ${BottomNav('home')}`;
 }
@@ -1562,7 +1595,7 @@ async function StaffHome(){
         ${(c.ownerLat&&c.ownerLng)? `<a href="https://www.google.com/maps?q=${c.ownerLat},${c.ownerLng}" target="_blank" style="font-size:12px; color:var(--pink-d); font-weight:600;">🗺️ ${t('openInGmaps')}</a>`:''}
       </div>`;}).join(''): `<p class="sub">${t('noData')}</p>`}</div>` : ''}
 
-    ${state.staffTab==='transport'? `<div class="card">${trs.length? trs.map(r=>`
+    ${state.staffTab==='transport'? `<div class="card"><p class="hint" style="margin:0 0 10px;">${t('transportNowExternalNote')}</p>${trs.length? trs.map(r=>`
       <div class="list-item" style="display:block; padding:10px 0;">
         <b style="font-family:'Kanit'">${r.ownerName}</b> <span class="pill pill-grey">${r.community}</span>
         <div class="sub">${fmtDate(r.apptDate)} · ${r.hospital}</div>
