@@ -93,7 +93,7 @@ h1,h2,h3,.display{font-family:'Kanit','Noto Sans Myanmar',sans-serif; font-weigh
 .status-bar > div{height:100%; border-radius:999px;}
 .list-item{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #F5EDEA;}
 .list-item:last-child{border-bottom:none;}
-.footer{max-width:480px; margin:0 auto; text-align:center; padding:22px 20px 26px; color:var(--ink-soft); font-size:11.5px; line-height:1.6;}
+.footer{max-width:480px; margin:0 auto; text-align:center; color:var(--ink-soft); font-size:11px; line-height:1.5; position:relative; z-index:1;}
 .footer b{color:var(--ink);}
 .bottomnav{
   position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
@@ -382,6 +382,8 @@ const T = {
   officialFormStep3:{th:"ช่อง \"รายละเอียด\" ระบุ วันนัด โรงพยาบาลปลายทาง และชื่อญาติ 1 คนที่จะเดินทางไปด้วย", en:"In \"Details\", include the appointment date, destination hospital, and the name of the 1 relative who will travel with you", my:"\"အသေးစိတ်\" တွင် ချိန်းရက်၊ ဆေးရုံအမည်နှင့် လိုက်ပါမည့် ဆွေမျိုး ၁ ဦး၏အမည် ထည့်ပါ"},
   officialFormStep4:{th:"กรอก \"ข้อมูลผู้ร้องเรียน\" (คำนำหน้า ชื่อ-นามสกุล ภาษาไทย เบอร์โทร) ให้ครบตามจริง แล้วกดส่ง", en:"Fill in your \"Contact information\" (title, Thai name, phone number) completely and accurately, then submit", my:"\"တောင်းဆိုသူ အချက်အလက်\" ကို အပြည့်အစုံဖြည့်ပြီး ပေးပို့ပါ"},
   transportNowExternalNote:{th:"ตั้งแต่นี้ ประชาชนยื่นคำร้องขอรถผ่านระบบทางการของเทศบาลโดยตรง (ไม่ผ่านแอปนี้แล้ว) รายการด้านล่างเป็นคำร้องเก่าที่เคยส่งผ่านแอปก่อนหน้านี้", en:"Requests now go through the municipality's official system directly (no longer through this app). The list below shows older requests submitted via the app before this change.", my:"ယခုမှစတင်၍ တောင်းဆိုမှုများသည် တရားဝင်စနစ်မှတဆင့် တိုက်ရိုက်သွားပါသည်။"},
+  yourPastRequests:{th:"คำร้องเดิมของท่าน", en:"Your past requests", my:"သင့်ရှေးက တောင်းဆိုမှုများ"},
+  requestAgain:{th:"🔁 ขอรถใหม่", en:"🔁 Request again", my:"🔁 ထပ်တောင်းရန်"},
   gpsBtn:{th:"📍 ใช้ตำแหน่ง GPS ปัจจุบัน", en:"📍 Use current GPS location", my:"📍 လက်ရှိ GPS သုံးရန်"},
   gpsCaptured:{th:"✅ ปักหมุดแล้ว", en:"✅ Location pinned", my:"✅ ပင်တပ်ပြီး"},
   gpsFailed:{th:"⚠️ ไม่สามารถระบุตำแหน่งได้ กรุณาลองใหม่หรืออนุญาตการเข้าถึงตำแหน่ง", en:"⚠️ Could not get location. Please allow location access and try again.", my:"⚠️ တည်နေရာ မရနိုင်ပါ"},
@@ -788,7 +790,7 @@ function Topbar(showBack, backAction){
   </div>`;
 }
 function Footer(){
-  return `<div class="footer">🌱 ${t('developedBy')}<br><b>${t('devName')}</b><br>${t('devRole')}</div>`;
+  return `<div class="footer" style="padding:14px 20px calc(14px + env(safe-area-inset-bottom));">🌱 ${t('developedBy')}: <b>${t('devName')}</b></div>`;
 }
 function BottomNav(active){
   if(!state.user) return '';
@@ -1381,6 +1383,7 @@ function toggleBenefit(k,v){ state.benefitChecks=state.benefitChecks||{}; state.
 const OFFICIAL_TRANSPORT_FORM_URL = "https://localgov.egov.go.th/%E0%B9%80%E0%B8%97%E0%B8%A8%E0%B8%9A%E0%B8%B2%E0%B8%A5%E0%B8%99%E0%B8%84%E0%B8%A3%E0%B8%A5%E0%B8%B3%E0%B8%9B%E0%B8%B2%E0%B8%87-03520102/one-stop-service/complaint";
 async function Transport(){
   const outside = !!state.user.outsideMunicipality;
+  const myOldRequests = outside? [] : (await sget('transport_requests', [])).filter(r=>r.ownerCid===state.user.cid);
   return `${Topbar(true, "goto('home')")}
   <div class="screen">
     <h2 class="title-lg">${t('transportTitle')}</h2>
@@ -1401,7 +1404,19 @@ async function Transport(){
         <li>${t('officialFormStep3')}</li>
         <li>${t('officialFormStep4')}</li>
       </ol>
-    </div>`}
+    </div>
+    ${myOldRequests.length? `
+    <div style="margin-top:16px;">
+      <div class="eyebrow">📜 ${t('yourPastRequests')}</div>
+      ${myOldRequests.map(r=>`
+        <div class="card" style="display:flex; align-items:center; gap:10px;">
+          <div style="flex:1;">
+            <div style="font-family:'Kanit'; font-weight:600; font-size:13.5px;">${fmtDate(r.apptDate)}</div>
+            <div class="sub" style="margin:0;">${r.hospital||''}</div>
+          </div>
+          <a href="${OFFICIAL_TRANSPORT_FORM_URL}" target="_blank" class="btn btn-secondary btn-sm" style="width:auto; white-space:nowrap;">${t('requestAgain')}</a>
+        </div>`).join('')}
+    </div>` : ''}`}
   </div>
   ${BottomNav('home')}`;
 }
@@ -1679,7 +1694,7 @@ async function render(){
     case 'staffHome': html = state.user? await StaffHome(): Splash(); break;
     default: html = Splash();
   }
-  app.innerHTML = html;
+  app.innerHTML = html + Footer();
   if(state.toast){
     const tst = el(`<div class="toast">${state.toast}</div>`);
     document.body.appendChild(tst);
