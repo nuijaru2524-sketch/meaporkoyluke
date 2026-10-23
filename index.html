@@ -510,6 +510,16 @@ const T = {
   selectCommunity:{th:"— เลือกชุมชน —", en:"— select community —", my:"— ရပ်ကွက်ရွေးပါ —"},
   register:{th:"สมัครสมาชิก", en:"Register", my:"စာရင်းသွင်းရန်"},
   haveAccount:{th:"มีบัญชีแล้ว? เข้าสู่ระบบ", en:"Already have an account? Log in", my:"အကောင့်ရှိပြီးသားလား? ဝင်ရန်"},
+  forgotLink:{th:"ลืมรหัสผ่าน? ขอให้เจ้าหน้าที่รีเซ็ต", en:"Forgot password? Ask staff to reset", my:"စကားဝှက်မေ့နေပါသလား? ဝန်ထမ်းကို ပြန်လည်သတ်မှတ်ခိုင်းရန်"},
+  forgotTitle:{th:"ขอรีเซ็ตรหัสผ่านโดยเจ้าหน้าที่", en:"Request a password reset by staff", my:"ဝန်ထမ်းမှ စကားဝှက်ပြန်လည်သတ်မှတ်ရန် တောင်းဆိုခြင်း"},
+  forgotNote:{th:"กรอกข้อมูลแล้วกดส่ง เจ้าหน้าที่จะรีเซ็ตให้ และติดต่อกลับตามเบอร์ที่ท่านระบุ พร้อมรหัสผ่านชั่วคราว", en:"Fill in and send. Staff will reset it and contact you at the number you give, with a temporary password.", my:"ဖြည့်ပြီး ပို့ပါ။ ဝန်ထမ်းမှ ပြန်လည်သတ်မှတ်ပေးပြီး ပေးထားသောနံပါတ်သို့ ယာယီစကားဝှက်ဖြင့် ဆက်သွယ်ပါမည်။"},
+  forgotIdLabel:{th:"เบอร์โทร/เลขที่ใช้ล็อกอิน", en:"Phone/ID used to log in", my:"လော့ဂ်အင်ဝင်ရန်သုံးသော ဖုန်း/အိုင်ဒီ"},
+  forgotNameLabel:{th:"ชื่อ-นามสกุล", en:"Full name", my:"အမည်"},
+  forgotContactLabel:{th:"เบอร์ติดต่อกลับ", en:"Contact phone", my:"ပြန်လည်ဆက်သွယ်ရန်ဖုန်း"},
+  forgotSend:{th:"ส่งคำขอรีเซ็ต", en:"Send request", my:"တောင်းဆိုမှုပို့ရန်"},
+  forgotSent:{th:"ส่งคำขอแล้ว เจ้าหน้าที่จะติดต่อกลับค่ะ", en:"Request sent. Staff will contact you.", my:"တောင်းဆိုမှုပို့ပြီးပါပြီ။ ဝန်ထမ်းမှ ဆက်သွယ်ပါမည်။"},
+  forgotFail:{th:"ส่งไม่สำเร็จ ลองใหม่อีกครั้ง หรือโทร 054-237237 ต่อ 5207", en:"Could not send. Try again or call 054-237237 ext. 5207", my:"မပို့နိုင်ပါ။ ထပ်စမ်းပါ သို့မဟုတ် 054-237237 ext. 5207 သို့ခေါ်ပါ"},
+  resetTab:{th:"รีเซ็ตรหัสผ่าน", en:"Password reset", my:"စကားဝှက်ပြန်သတ်မှတ်"},
   noAccount:{th:"ยังไม่มีบัญชี? สมัครสมาชิก", en:"No account? Register", my:"အကောင့်မရှိသေးဘူးလား? စာရင်းသွင်းပါ"},
   greeting:{th:"สวัสดี", en:"Hello", my:"မင်္ဂလာပါ"},
   modPregnancy:{th:"ติดตามการตั้งครรภ์", en:"Pregnancy tracking", my:"ကိုယ်ဝန်ဆောင်မှု"},
@@ -923,7 +933,6 @@ function Splash(){
     <img src="${LOGO_B64}" alt="เทศบาลนครลำปาง" style="width:74px; height:74px; border-radius:50%; box-shadow:0 6px 16px rgba(0,0,0,0.12); margin-bottom:8px;">
     <div style="font-size:52px; margin-bottom:2px;">🌱</div>
     <h1 class="title-lg" style="font-size:28px;">${t('appName')}</h1>
-    <span class="pill pill-orange" style="margin-top:6px; display:inline-block;">${t('pilotBadge')}</span>
     <p class="sub" style="margin-top:8px; padding:0 8px; line-height:1.6;">${t('taglineFull')}</p>
     <div style="margin-top:32px;" class="stack">
       <button class="btn btn-primary" onclick="goto('consent')">${t('registerBtn')}</button>
@@ -1062,8 +1071,41 @@ function Login(){
     <div class="field"><label>${t('password')}</label><input id="l_pw" type="password"></div>
     <button class="btn btn-primary" onclick="doLogin()">${t('loginBtn')}</button>
     <button class="btn btn-ghost" onclick="goto('consent')" style="margin-top:6px;">${t('noAccount')}</button>
+    <button class="btn btn-ghost" onclick="goto('forgot')" style="margin-top:2px;">${t('forgotLink')}</button>
   </div>`;
 }
+function Forgot(){
+  return `${Topbar(true, "goto('login')")}
+  <div class="screen">
+    <h2 class="title-lg">${t('forgotTitle')}</h2>
+    <p class="hint">${t('forgotNote')}</p>
+    <div class="field"><label>${t('forgotIdLabel')}</label><input id="f_id" inputmode="numeric"></div>
+    <div class="field"><label>${t('forgotNameLabel')}</label><input id="f_name"></div>
+    <div class="field"><label>${t('forgotContactLabel')}</label><input id="f_phone" inputmode="tel"></div>
+    <button class="btn btn-primary" onclick="sendResetRequest()">${t('forgotSend')}</button>
+  </div>`;
+}
+async function sendResetRequest(){
+  const cid=document.getElementById('f_id').value.trim();
+  const name=document.getElementById('f_name').value.trim();
+  const phone=document.getElementById('f_phone').value.trim();
+  if(!cid||!name||!phone){ showToast(t('requiredFields')); return; }
+  const ok = await sheetsSave('คำขอรีเซ็ตรหัสผ่าน', { id:'rst_'+cid, cid, name, phone, status:'pending', requestedAt:new Date().toISOString() });
+  showToast(ok? t('forgotSent'): t('forgotFail'));
+  if(ok) goto('login');
+}
+function genTempPw(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'; let o='Mpk'; for(let i=0;i<5;i++) o+=c[Math.floor(Math.random()*c.length)]; return o; }
+async function doStaffReset(cid){
+  const users = await sheetsList('Users');
+  if(!users || !users.find(u=>u.cid===cid)){ showToast('ไม่พบบัญชีนี้ในระบบ / Account not found'); return; }
+  const tmp = genTempPw();
+  const okU = await sheetsSave('Users', { cid, pw: await hashPassword(tmp) });
+  if(!okU){ showToast(t('forgotFail')); return; }
+  await sheetsSave('คำขอรีเซ็ตรหัสผ่าน', { id:'rst_'+cid, status:'done', resolvedAt:new Date().toISOString() });
+  state.lastReset = { cid, pw: tmp };
+  render();
+}
+window.sendResetRequest=sendResetRequest; window.doStaffReset=doStaffReset;
 async function doLogin(){
   const uid=document.getElementById('l_id').value.trim();
   const pw=document.getElementById('l_pw').value;
@@ -1679,13 +1721,15 @@ async function StaffHome(){
   const kids = await loadChildren();
   const trs = await sget('transport_requests', []);
   const mhAll = await sget('mental_health', []);
+  let resetReqs = [];
+  if(state.staffTab==='reset'){ resetReqs = (await sheetsList('คำขอรีเซ็ตรหัสผ่าน')) || []; }
   const filter = state.staffFilter;
   const fp = filter? preg.filter(r=>r.community===filter): preg;
   const fk = filter? kids.filter(c=>c.community===filter): kids;
   const fmh = (filter? mhAll.filter(r=>r.community===filter): mhAll).filter(r=>r.score>=7 || r.crisisFlag);
   const commCounts = {};
   [...preg, ...kids].forEach(r=>{ commCounts[r.community]=(commCounts[r.community]||0)+1; });
-  const tabs = [['summary', t('summaryTab')], ['preg', t('pregnancyRecordsStaff')], ['child', t('childRecordsStaff')], ['transport', t('transportRequests')], ['mh', t('mentalHealthTitle')]];
+  const tabs = [['summary', t('summaryTab')], ['preg', t('pregnancyRecordsStaff')], ['child', t('childRecordsStaff')], ['transport', t('transportRequests')], ['mh', t('mentalHealthTitle')], ['reset', t('resetTab')]];
   return `${Topbar(false)}
   <div class="screen">
     <div class="card soft-yellow" style="display:flex; align-items:center; gap:12px;">
@@ -1732,6 +1776,15 @@ async function StaffHome(){
         <div class="sub">${fmtDate(r.apptDate)} · ${r.hospital}</div>
       </div>`).join(''): `<p class="sub">${t('noData')}</p>`}</div>` : ''}
 
+    ${state.staffTab==='reset'? `<div class="card">
+      ${state.lastReset? `<div class="card soft-green" style="margin-bottom:10px;"><b>${state.lastReset.cid}</b><br>รหัสผ่านชั่วคราว / Temporary password:<div style="font-family:monospace; font-size:22px; font-weight:700; margin-top:4px;">${state.lastReset.pw}</div><div class="sub">แจ้งผู้ใช้ทางโทรศัพท์ แล้วให้เข้าสู่ระบบด้วยรหัสนี้</div></div>`:''}
+      ${resetReqs.filter(r=>r.status==='pending').length? resetReqs.filter(r=>r.status==='pending').map(r=>`
+      <div class="list-item" style="display:block; padding:10px 0;">
+        <b style="font-family:'Kanit'">${r.name}</b> <span class="pill pill-grey">${r.cid}</span>
+        <div class="sub">📞 ${r.phone} · ${fmtDate(r.requestedAt)}</div>
+        <button class="btn btn-secondary" style="margin-top:6px;" onclick="doStaffReset('${r.cid}')">🔑 ${t('resetTab')}</button>
+      </div>`).join(''): `<p class="sub">${t('noData')}</p>`}</div>` : ''}
+
     ${state.staffTab==='mh'? `<div class="card"><p class="hint" style="margin:0 0 8px;">${t('mhFlaggedNote')}</p>${fmh.length? fmh.map(r=>`
       <div class="list-item" style="display:block; padding:10px 0;">
         <b style="font-family:'Kanit'">${r.ownerName}</b> <span class="pill pill-grey">${r.community}</span> ${r.crisisFlag? `<span class="pill pill-red">⚠️</span>`:''}
@@ -1751,7 +1804,6 @@ function About(){
       <img src="${LOGO_B64}" alt="เทศบาลนครลำปาง" style="width:64px; height:64px; border-radius:50%; margin-bottom:6px; box-shadow:0 4px 12px rgba(0,0,0,0.12);">
       <div style="font-size:36px;">🌱</div>
       <b style="font-family:'Kanit'">${t('appName')}</b>
-      <div><span class="pill pill-orange" style="margin-top:6px;">${t('pilotBadge')}</span></div>
       <p class="sub">${t('taglineFull')}</p>
     </div>
     <div class="card">
@@ -1798,6 +1850,7 @@ async function render(){
     case 'consent': html = Consent(); break;
     case 'register': html = Register(); break;
     case 'login': html = Login(); break;
+    case 'forgot': html = Forgot(); break;
     case 'home': html = state.user? Home() : Splash(); break;
     case 'pregnancy': html = state.user? await Pregnancy() : Splash(); break;
     case 'children': html = state.user? await Children() : Splash(); break;
